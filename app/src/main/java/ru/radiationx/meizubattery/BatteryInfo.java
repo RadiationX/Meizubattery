@@ -11,7 +11,7 @@ class BatteryInfo {
     final static String HEALTH = "HEALTH";
     final static String MANUFACTURER = "MANUFACTURER";
     private int present, capacity;
-    private float temp, voltageNow, currentNow, voltageAvg, currentAvg, currentFull;
+    private float temp, voltageNow, currentNow, voltageAvg, currentAvg, currentCharge;
     private CharSequence health, manufacturer;
 
     int getPresent() {
@@ -70,12 +70,12 @@ class BatteryInfo {
         this.currentAvg = currentAvg;
     }
 
-    float getCurrentFull() {
-        return currentFull;
+    float getCurrentCharge() {
+        return currentCharge;
     }
 
-    void setCurrentFull(float currentFull) {
-        this.currentFull = currentFull;
+    void setCurrentCharge(float currentCharge) {
+        this.currentCharge = currentCharge;
     }
 
     CharSequence getHealth() {

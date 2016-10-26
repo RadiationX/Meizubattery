@@ -1,5 +1,6 @@
 package ru.radiationx.meizubattery;
 
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -9,13 +10,11 @@ import android.graphics.Color;
 import android.os.BatteryManager;
 import android.os.Handler;
 import android.preference.PreferenceManager;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.jjoe64.graphview.GraphView;
 import com.jjoe64.graphview.series.DataPoint;
@@ -25,10 +24,6 @@ import com.jjoe64.graphview.series.LineGraphSeries;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
@@ -36,7 +31,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
     //BibleChapterView bibleChapterView;
     private GraphView graphVolt, graphCur;
     private TextView textView;
@@ -96,30 +91,30 @@ public class MainActivity extends AppCompatActivity {
         graphCur.addSeries(curNowSeries);
         graphCur.addSeries(curAvgSeries);
         graphCur.addSeries(curFullSeries);
-        graphVolt.getSecondScale().addSeries(capSeries);
-        graphCur.getSecondScale().addSeries(tempSeries);
+        //graphVolt.getSecondScale().addSeries(capSeries);
+        //graphCur.getSecondScale().addSeries(tempSeries);
 
         voltNowSeries.setTitle("VoltNow");
         voltAvgSeries.setTitle("VoltAvg");
         curNowSeries.setTitle("CurNow");
         curAvgSeries.setTitle("CurAvg");
-        curFullSeries.setTitle("CurFull");
-        capSeries.setTitle("Capacity");
-        tempSeries.setTitle("Temp");
+        curFullSeries.setTitle("CurChrg");
+        //capSeries.setTitle("Capacity");
+        //tempSeries.setTitle("Temp");
 
         voltNowSeries.setColor(Color.argb(255, 255, 128, 128));
         curNowSeries.setColor(Color.argb(255, 255, 128, 128));
         curFullSeries.setColor(Color.MAGENTA);
-        capSeries.setColor(Color.GREEN);
-        tempSeries.setColor(Color.GREEN);
+        //capSeries.setColor(Color.GREEN);
+        //tempSeries.setColor(Color.GREEN);
 
         stringData = getPreferences().getString("DATALIST", "");
         if (!stringData.isEmpty()) {
             String[] items = stringData.split(";");
             for (String item : items) {
                 String[] fields = item.split(":");
-                capSeries.appendData(new DataPoint(i, (double) Math.abs(Float.parseFloat(fields[0]))), true, i);
-                tempSeries.appendData(new DataPoint(i, (double) Math.abs(Float.parseFloat(fields[1]))), true, i);
+                //capSeries.appendData(new DataPoint(i, (double) Math.abs(Float.parseFloat(fields[0]))), true, i);
+                //tempSeries.appendData(new DataPoint(i, (double) Math.abs(Float.parseFloat(fields[1]))), true, i);
                 voltNowSeries.appendData(new DataPoint(i, (double) Math.abs(Float.parseFloat(fields[2]))), true, i);
                 voltAvgSeries.appendData(new DataPoint(i, (double) Math.abs(Float.parseFloat(fields[3]))), true, i);
                 curNowSeries.appendData(new DataPoint(i, (double) Math.abs(Float.parseFloat(fields[4]))), true, i);
@@ -175,20 +170,20 @@ public class MainActivity extends AppCompatActivity {
                     setData(matcher.group(1), matcher.group(2));
                 }
             }
-            capSeries.appendData(new DataPoint(i, (double) Math.abs(info.getCapacity())), true, i);
-            tempSeries.appendData(new DataPoint(i, (double) Math.abs(info.getTemp())), true, i);
+            //capSeries.appendData(new DataPoint(i, (double) Math.abs(info.getCapacity())), true, i);
+            //tempSeries.appendData(new DataPoint(i, (double) Math.abs(info.getTemp())), true, i);
             voltNowSeries.appendData(new DataPoint(i, (double) Math.abs(info.getVoltageNow())), true, i);
             voltAvgSeries.appendData(new DataPoint(i, (double) Math.abs(info.getVoltageAvg())), true, i);
             curNowSeries.appendData(new DataPoint(i, (double) Math.abs(info.getCurrentNow())), true, i);
             curAvgSeries.appendData(new DataPoint(i, (double) Math.abs(info.getCurrentAvg())), true, i);
-            curFullSeries.appendData(new DataPoint(i, (double) Math.abs(info.getCurrentFull())), true, i);
+            curFullSeries.appendData(new DataPoint(i, (double) Math.abs(info.getCurrentCharge())), true, i);
             String data = String.valueOf(info.getCapacity()).concat(":")
                     .concat(String.valueOf(info.getTemp())).concat(":")
                     .concat(String.valueOf(info.getVoltageNow())).concat(":")
                     .concat(String.valueOf(info.getVoltageAvg())).concat(":")
                     .concat(String.valueOf(info.getCurrentNow())).concat(":")
                     .concat(String.valueOf(info.getCurrentAvg())).concat(":")
-                    .concat(String.valueOf(info.getCurrentFull()));
+                    .concat(String.valueOf(info.getCurrentCharge()));
             dataList.add(data);
 
             if (!stringData.isEmpty()) stringData = stringData.concat(";");
@@ -274,10 +269,10 @@ public class MainActivity extends AppCompatActivity {
                 break;
             case BatteryInfo.CURRENT_NOW:
                 value = Float.parseFloat(argValue) / 1000;
-                coef = Math.abs(1.0f / ((4.2f - info.getVoltageNow()) * 10));
-                Log.d("kek", "COEF " + coef);
-                info.setCurrentFull(charging ? 2000 - value : value);
-                info.setCurrentNow(charging ? value - 1000 : value);
+                float chrg = getChargeCur(info.getCapacity(), info.getVoltageNow());
+                info.setCurrentCharge(charging ? Math.max(getChargeCur(info.getCapacity(), info.getVoltageNow()), Math.abs(value)) : 0);
+                Log.d("kek", "compare currents " + value + " : " + info.getCurrentCharge()+ " : "+chrg);
+                info.setCurrentNow(charging ? Math.max(Math.abs(value) + info.getCurrentCharge(), chrg) : value);
                 break;
             case BatteryInfo.CURRENT_AVG:
                 value = Float.parseFloat(argValue) / 1000;
@@ -290,5 +285,16 @@ public class MainActivity extends AppCompatActivity {
                 info.setManufacturer(argValue);
                 break;
         }
+    }
+
+    private float getChargeCur(int cap, float volt) {
+        float f = 1000;
+        if (volt > 3.9) {
+            f = (float) (-(9 / (105 - 1.03f * (cap - 4))) * Math.sqrt(volt - 3.9f) + 1.0f);
+        }
+        f = Math.max(f, 0);
+        f = Math.min(f, 1000);
+        Log.d("kek", "charge cur [" + cap + ", " + volt + "] " + f);
+        return f;
     }
 }
